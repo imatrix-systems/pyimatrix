@@ -6,13 +6,22 @@ from collections.abc import Iterable
 from datetime import datetime
 
 from .auth import AbstractAuth
-from .const import DEVICE_PAGE_SIZE, MAX_DEVICES_PER_LATEST
+from .const import DEVICE_PAGE_SIZE, MAX_DEVICES_PER_LATEST, MAX_HISTORY_SENSORS
 from .exceptions import IMatrixResponseError
-from .models import Account, Device, DeviceState, Latest
+from .models import Account, Device, DeviceState, Faults, History, Latest, Trip
 
 
 def _csv(values: Iterable[int]) -> str:
     return ",".join(str(v) for v in values)
+
+
+def _window(start: datetime | None, end: datetime | None) -> dict[str, str]:
+    params: dict[str, str] = {}
+    if start is not None:
+        params["from"] = start.isoformat()
+    if end is not None:
+        params["to"] = end.isoformat()
+    return params
 
 
 class IMatrixClient:
@@ -74,3 +83,28 @@ class IMatrixClient:
             if part.server_time and (server_time is None or part.server_time < server_time):
                 server_time = part.server_time
         return Latest(server_time=server_time, devices=merged)
+
+    async def get_faults(self, sn: int) -> Faults:
+        """Return active and reported faults of the last 7 days, and the lamps."""
+        return Faults.from_dict(await self.auth.request(f"/devices/{int(sn)}/faults"))
+
+    async def get_history(
+        self,
+        sn: int,
+        sensor_ids: Iterable[int],
+        start: datetime | None = None,
+        end: datetime | None = None,
+    ) -> History:
+        """Return hourly history. Server limits: 1-20 sensors, at most 7 days."""
+        ids = list(dict.fromkeys(sensor_ids))
+        if not 1 <= len(ids) <= MAX_HISTORY_SENSORS:
+            raise ValueError(f"sensor_ids must hold 1 to {MAX_HISTORY_SENSORS} ids")
+        params = {"sensorIds": _csv(ids), "bucket": "1h", **_window(start, end)}
+        return History.from_dict(await self.auth.request(f"/devices/{int(sn)}/history", params))
+
+    async def get_trips(
+        self, sn: int, start: datetime | None = None, end: datetime | None = None
+    ) -> list[Trip]:
+        """Return trips, newest first. Server limit: 31 days, default the last 7."""
+        body = await self.auth.request(f"/devices/{int(sn)}/trips", _window(start, end))
+        return [Trip.from_dict(t) for t in body.get("trips") or ()]

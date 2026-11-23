@@ -359,3 +359,240 @@ class Latest:
                 int(sn): DeviceState.from_dict(d) for sn, d in (data.get("devices") or {}).items()
             },
         )
+
+
+class FaultProtocol(_ForwardCompatEnum):
+    """Diagnostic protocol of a fault."""
+
+    J1939 = "j1939"
+    OBD2 = "obd2"
+    UNKNOWN = "unknown"
+
+
+class FaultStatus(_ForwardCompatEnum):
+    """Active: a SET was seen in the window. Reported: present, SET not seen."""
+
+    ACTIVE = "active"
+    REPORTED = "reported"
+    UNKNOWN = "unknown"
+
+
+class FaultSeverity(_ForwardCompatEnum):
+    """Severity iMatrix assigns to a fault."""
+
+    INFO = "info"
+    WARNING = "warning"
+    CRITICAL = "critical"
+    UNKNOWN = "unknown"
+
+
+def _opt_bool(value: Any) -> bool | None:
+    return None if value is None else bool(value)
+
+
+def _opt_int(value: Any) -> int | None:
+    return None if value is None else int(value)
+
+
+@dataclass(frozen=True, slots=True)
+class Lamps:
+    """J1939 dashboard lamps. None means not available or reserved."""
+
+    mil: bool | None
+    red_stop: bool | None
+    amber: bool | None
+    protect: bool | None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> Lamps | None:
+        """Build from a lamps object, or None."""
+        if data is None:
+            return None
+        return cls(
+            mil=_opt_bool(data.get("mil")),
+            red_stop=_opt_bool(data.get("redStop")),
+            amber=_opt_bool(data.get("amber")),
+            protect=_opt_bool(data.get("protect")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Fault:
+    """One active or reported fault. id is opaque and stable per occurrence."""
+
+    id: str
+    display_code: str
+    name: str | None
+    protocol: FaultProtocol
+    status: FaultStatus
+    severity: FaultSeverity
+    ecu: str | None
+    source_address: int | None
+    spn: int | None
+    fmi: int | None
+    code: str | None
+    occurrence: int | None
+    set_time: datetime | None
+    last_seen: datetime | None
+    lamps: Lamps | None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Fault:
+        """Build from a fault object."""
+        return cls(
+            id=str(_require(data, "id")),
+            display_code=str(data.get("displayCode") or data.get("code") or data["id"]),
+            name=data.get("name"),
+            protocol=FaultProtocol.parse(data.get("protocol")),
+            status=FaultStatus.parse(data.get("status")),
+            severity=FaultSeverity.parse(data.get("severity")),
+            ecu=data.get("ecu"),
+            source_address=_opt_int(data.get("sourceAddress")),
+            spn=_opt_int(data.get("spn")),
+            fmi=_opt_int(data.get("fmi")),
+            code=data.get("code"),
+            occurrence=_opt_int(data.get("occurrence")),
+            set_time=parse_time(data.get("setTs")),
+            last_seen=parse_time(data.get("lastSeenTs")),
+            lamps=Lamps.from_dict(data.get("lamps")),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class Faults:
+    """A GET /devices/:sn/faults response (last 7 days, newest first)."""
+
+    sn: int
+    lamps: Lamps | None
+    lamps_time: datetime | None
+    active_count: int | None
+    truncated: bool
+    faults: tuple[Fault, ...]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Faults:
+        """Build from a faults body."""
+        return cls(
+            sn=int(_require(data, "sn")),
+            lamps=Lamps.from_dict(data.get("lamps")),
+            lamps_time=parse_time(data.get("lampsTime")),
+            active_count=_opt_int(data.get("activeDtcCount")),
+            truncated=bool(data.get("truncated", False)),
+            faults=tuple(Fault.from_dict(f) for f in data.get("faults") or ()),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class HistoryPoint:
+    """One UTC hour of a channel. Hours with no data are absent."""
+
+    start: datetime
+    mean: float
+    min: float
+    max: float
+    last: float
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
+class HistorySeries:
+    """Hourly points of one channel, in its canonical unit."""
+
+    unit: str | None
+    quantity_kind: str | None
+    truncated: bool
+    points: tuple[HistoryPoint, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class History:
+    """A GET /devices/:sn/history response."""
+
+    sn: int
+    start: datetime | None
+    end: datetime | None
+    series: dict[int, HistorySeries]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> History:
+        """Build from a history body."""
+        series: dict[int, HistorySeries] = {}
+        for sensor_id, raw in (data.get("series") or {}).items():
+            points = []
+            for p in raw.get("points") or ():
+                start = parse_time(_require(p, "t"))
+                if start is None:
+                    raise IMatrixResponseError("history point without a time")
+                points.append(
+                    HistoryPoint(
+                        start=start,
+                        mean=float(p["mean"]),
+                        min=float(p["min"]),
+                        max=float(p["max"]),
+                        last=float(p["last"]),
+                        count=int(p.get("n", 0)),
+                    )
+                )
+            series[int(sensor_id)] = HistorySeries(
+                unit=raw.get("unit"),
+                quantity_kind=raw.get("quantityKind"),
+                truncated=bool(raw.get("truncated", False)),
+                points=tuple(points),
+            )
+        return cls(
+            sn=int(_require(data, "sn")),
+            start=parse_time(data.get("from")),
+            end=parse_time(data.get("to")),
+            series=series,
+        )
+
+
+class TripStatus(_ForwardCompatEnum):
+    """Whether a trip is still running."""
+
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class LatLng:
+    """A plain coordinate pair."""
+
+    latitude: float
+    longitude: float
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> LatLng | None:
+        """Build from {lat, lng}, or None."""
+        if data is None:
+            return None
+        return cls(latitude=float(data["lat"]), longitude=float(data["lng"]))
+
+
+@dataclass(frozen=True, slots=True)
+class Trip:
+    """One trip. An active trip has no end."""
+
+    id: str
+    status: TripStatus
+    start: datetime | None
+    end: datetime | None
+    distance_km: float | None
+    duration_s: int | None
+    start_position: LatLng | None
+    end_position: LatLng | None
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Trip:
+        """Build from a trip object."""
+        return cls(
+            id=str(_require(data, "id")),
+            status=TripStatus.parse(data.get("status")),
+            start=parse_time(data.get("start")),
+            end=parse_time(data.get("end")),
+            distance_km=_opt_float(data.get("distanceKm")),
+            duration_s=_opt_int(data.get("durationS")),
+            start_position=LatLng.from_dict(data.get("startPosition")),
+            end_position=LatLng.from_dict(data.get("endPosition")),
+        )

@@ -1,0 +1,13 @@
+{"schemaVersion": 1, "sn": 1000000001,
+ "lamps": {"mil": true, "redStop": false, "amber": null, "protect": false}, "lampsTime": "2026-11-23T14:00:00Z",
+ "activeDtcCount": 2, "truncated": false,
+ "faults": [
+  {"id": "j1939:0:110:0@1763906400000", "displayCode": "SPN 110 FMI 0", "name": "Engine Coolant Temperature",
+   "protocol": "j1939", "status": "active", "severity": "critical", "ecu": "Engine #1", "sourceAddress": 0,
+   "spn": 110, "fmi": 0, "code": null, "occurrence": 3, "setTs": "2026-11-23T14:00:00Z", "lastSeenTs": "2026-11-23T14:59:00Z",
+   "lamps": {"mil": false, "redStop": true, "amber": false, "protect": null}},
+  {"id": "obd2:P0420:16@reported", "displayCode": "P0420", "name": null, "protocol": "obd2", "status": "reported",
+   "severity": "warning", "ecu": null, "sourceAddress": null, "spn": null, "fmi": null, "code": "P0420",
+   "occurrence": null, "setTs": "2026-11-22T08:14:00Z", "lastSeenTs": null, "lamps": null},
+  {"id": "x@1", "protocol": "can-fd", "status": "pending", "severity": "fatal", "setTs": null}
+ ]}

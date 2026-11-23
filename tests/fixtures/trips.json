@@ -1,0 +1,7 @@
+{"schemaVersion": 1, "sn": 1000000001, "from": "2026-11-16T00:00:00Z", "to": "2026-11-23T15:00:00Z",
+ "trips": [
+  {"id": "stream:9", "status": "active", "start": "2026-11-23T14:30:00Z", "end": null, "distanceKm": 12.4, "durationS": 1800,
+   "startPosition": {"lat": 39.0, "lng": -120.1}, "endPosition": null},
+  {"id": "v3:8", "status": "completed", "start": "2026-11-22T09:00:00Z", "end": "2026-11-22T10:00:00Z", "distanceKm": null,
+   "durationS": null, "startPosition": null, "endPosition": {"lat": 39.2, "lng": -120.3}}
+ ]}
