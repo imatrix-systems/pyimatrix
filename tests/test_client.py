@@ -61,6 +61,10 @@ async def test_get_devices_paginates(client: IMatrixClient, api: FakeApi) -> Non
     ignition = truck.channels[2]
     assert ignition.mode is ChannelMode.STATEFUL
     assert [s.label for s in ignition.states] == ["Off", "On"]
+    assert ignition.state_count is None
+    dtc = truck.channels[3]
+    assert dtc.states == ()
+    assert dtc.state_count == 12128
 
     assert freezer.via_sn == 1000000001
     assert freezer.connectivity.state is ConnectivityState.ASLEEP

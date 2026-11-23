@@ -6,6 +6,7 @@
    {"sensorId": 64, "key": "odometer", "name": "Odometer", "quantityKind": "distance", "unit": "km", "dataType": "float", "mode": "scalar"},
    {"sensorId": 617, "key": "s617", "name": "Odometer (CAN)", "quantityKind": "distance", "unit": "km", "dataType": "float", "mode": "scalar"},
    {"sensorId": 93, "key": "ignition", "name": "Ignition", "quantityKind": null, "unit": null, "dataType": "uint", "mode": "stateful",
-    "states": [{"value": 0, "label": "Off"}, {"value": 1, "label": "On"}]}
+    "states": [{"value": 0, "label": "Off"}, {"value": 1, "label": "On"}]},
+   {"sensorId": 534, "key": "s534", "name": "OBD-II DTC", "quantityKind": null, "unit": null, "dataType": "uint", "mode": "stateful", "stateCount": 12128}
   ]}
 ]}

@@ -186,6 +186,8 @@ class Channel:
     data_type: str | None
     mode: ChannelMode
     states: tuple[ChannelState, ...]
+    # Set instead of states when a stateful channel has more than 64 states.
+    state_count: int | None = None
 
     @property
     def is_mapped(self) -> bool:
@@ -196,6 +198,7 @@ class Channel:
     def from_dict(cls, data: dict[str, Any]) -> Channel:
         """Build from a channel object."""
         sensor_id = int(_require(data, "sensorId"))
+        state_count = data.get("stateCount")
         return cls(
             sensor_id=sensor_id,
             key=str(data.get("key") or f"s{sensor_id}"),
@@ -208,6 +211,7 @@ class Channel:
                 ChannelState(value=int(s["value"]), label=s.get("label"))
                 for s in data.get("states") or ()
             ),
+            state_count=None if state_count is None else int(state_count),
         )
 
 

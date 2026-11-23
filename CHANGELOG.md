@@ -5,6 +5,7 @@
 - REST client for `/api/v1/integration` schemaVersion 1: `get_account`, `get_devices` (cursor
   pagination), `get_latest` (batches of 500 sns, `since` delta polling).
 - `ApiKeyAuth` (`X-API-Key`) and `TokenAuth` (Bearer, base for OAuth2).
-- Typed models. Unknown enum values map to `UNKNOWN`.
+- Typed models. Unknown enum values map to `UNKNOWN`. `Channel.state_count` is set in place of
+  `states` for stateful channels with more than 64 states.
 - Errors map HTTP status to `IMatrixAuthError`, `IMatrixPermissionError`, `IMatrixNotFoundError`,
   `IMatrixRateLimitError` (with `retry_after`), `IMatrixConnectionError`, `IMatrixResponseError`.
