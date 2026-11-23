@@ -1,0 +1,11 @@
+{"schemaVersion": 1, "serverTime": "2026-11-23T15:00:00Z", "devices": {
+ "1000000001": {"connectivity": {"state": "online", "lastSeen": "2026-11-23T14:59:02Z", "nextExpected": null},
+  "position": {"lat": 39.1, "lng": -120.0, "altitudeM": 1900.0, "headingDeg": 270, "speedKmh": 63.0, "hdop": 0.9, "satellites": 11, "fixTime": "2026-11-23T14:59:00Z"},
+  "values": {"64": {"v": 120455.2, "t": "2026-11-23T14:59:02Z", "alarm": "none", "alarmSide": null},
+             "93": {"v": 1, "t": "2026-11-23T14:59:02Z", "alarm": "none", "alarmSide": null}}},
+ "1000000002": {"connectivity": {"state": "asleep", "lastSeen": "2026-11-23T11:00:00Z", "nextExpected": null},
+  "position": null,
+  "values": {"250001": {"v": -14.2, "t": "2026-11-23T11:00:00+00:00", "alarm": "alarm", "alarmSide": "high", "clockSkew": true},
+             "250002": {"v": "fault", "t": "2026-11-23T11:00:00", "alarm": "mystery", "alarmSide": "sideways"},
+             "250003": {"v": null, "t": null}}}
+}}

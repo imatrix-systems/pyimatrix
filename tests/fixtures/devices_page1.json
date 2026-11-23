@@ -1,0 +1,11 @@
+{"schemaVersion": 1, "nextCursor": "c2", "devices": [
+ {"sn": 1000000001, "name": "Truck 12", "kind": "vehicle", "productId": 900001, "productName": "QConnect FC-202",
+  "platformType": "cellular", "firmware": "2.0.40", "groupId": 10, "groupPath": "Fleet / North", "viaSn": null, "viaSeenAt": null,
+  "connectivity": {"state": "online", "lastSeen": "2026-11-23T14:59:02Z", "nextExpected": "2026-11-23T15:04:02Z"},
+  "channels": [
+   {"sensorId": 64, "key": "odometer", "name": "Odometer", "quantityKind": "distance", "unit": "km", "dataType": "float", "mode": "scalar"},
+   {"sensorId": 617, "key": "s617", "name": "Odometer (CAN)", "quantityKind": "distance", "unit": "km", "dataType": "float", "mode": "scalar"},
+   {"sensorId": 93, "key": "ignition", "name": "Ignition", "quantityKind": null, "unit": null, "dataType": "uint", "mode": "stateful",
+    "states": [{"value": 0, "label": "Off"}, {"value": 1, "label": "On"}]}
+  ]}
+]}

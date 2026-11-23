@@ -1,7 +1,69 @@
 """Async client for the iMatrix Cloud integration API."""
 
-from .const import DEFAULT_BASE_URL, USER_AGENT_PRODUCT
+from .auth import AbstractAuth, ApiKeyAuth, TokenAuth
+from .client import IMatrixClient
+from .const import DEFAULT_BASE_URL, SCHEMA_VERSION, VERSION
+from .exceptions import (
+    IMatrixAuthError,
+    IMatrixConnectionError,
+    IMatrixError,
+    IMatrixNotFoundError,
+    IMatrixPermissionError,
+    IMatrixRateLimitError,
+    IMatrixResponseError,
+    IMatrixUnsupportedSchemaError,
+)
+from .models import (
+    Account,
+    AlarmLevel,
+    AlarmSide,
+    Channel,
+    ChannelMode,
+    ChannelState,
+    Connectivity,
+    ConnectivityState,
+    Device,
+    DeviceKind,
+    DeviceState,
+    Latest,
+    Limits,
+    PlatformType,
+    Position,
+    Reading,
+)
 
-__all__ = ["DEFAULT_BASE_URL", "USER_AGENT_PRODUCT", "__version__"]
+__version__ = VERSION
 
-__version__ = "0.0.1"
+__all__ = [
+    "DEFAULT_BASE_URL",
+    "SCHEMA_VERSION",
+    "AbstractAuth",
+    "Account",
+    "AlarmLevel",
+    "AlarmSide",
+    "ApiKeyAuth",
+    "Channel",
+    "ChannelMode",
+    "ChannelState",
+    "Connectivity",
+    "ConnectivityState",
+    "Device",
+    "DeviceKind",
+    "DeviceState",
+    "IMatrixAuthError",
+    "IMatrixClient",
+    "IMatrixConnectionError",
+    "IMatrixError",
+    "IMatrixNotFoundError",
+    "IMatrixPermissionError",
+    "IMatrixRateLimitError",
+    "IMatrixResponseError",
+    "IMatrixUnsupportedSchemaError",
+    "Latest",
+    "Limits",
+    "PlatformType",
+    "Position",
+    "Reading",
+    "TokenAuth",
+    "__version__",
+]

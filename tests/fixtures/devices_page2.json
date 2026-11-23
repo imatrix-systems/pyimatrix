@@ -1,0 +1,11 @@
+{"schemaVersion": 1, "nextCursor": null, "devices": [
+ {"sn": 1000000002, "name": "Freezer 3", "kind": "environmental", "productId": 900002, "productName": "BLE Temp Probe",
+  "platformType": "ble", "firmware": null, "groupId": 11, "groupPath": "Depot", "viaSn": 1000000001, "viaSeenAt": "2026-11-23T14:58:40Z",
+  "connectivity": {"state": "asleep", "lastSeen": "2026-11-23T11:00:00Z", "nextExpected": null},
+  "channels": [
+   {"sensorId": 250001, "key": "s250001", "name": "Probe 1", "quantityKind": "temperature", "unit": "°C", "dataType": "float", "mode": "scalar"}
+  ]},
+ {"sn": 1000000003, "name": null, "kind": "satellite-thing", "productId": null, "productName": null,
+  "platformType": "lora", "firmware": null, "groupId": null, "groupPath": null, "viaSn": null, "viaSeenAt": null,
+  "connectivity": {"state": "hibernating", "lastSeen": null, "nextExpected": null}, "channels": []}
+]}
