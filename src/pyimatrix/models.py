@@ -596,3 +596,77 @@ class Trip:
             start_position=LatLng.from_dict(data.get("startPosition")),
             end_position=LatLng.from_dict(data.get("endPosition")),
         )
+
+
+class EventType(_ForwardCompatEnum):
+    """Event types in the integration event feed."""
+
+    CONNECTIVITY_CHANGED = "connectivity_changed"
+    DTC_SET = "dtc_set"
+    DTC_CLEARED = "dtc_cleared"
+    LAMP_CHANGED = "lamp_changed"
+    IGNITION_ON = "ignition_on"
+    IGNITION_OFF = "ignition_off"
+    GEOFENCE_ENTER = "geofence_enter"
+    GEOFENCE_EXIT = "geofence_exit"
+    GEOFENCE_DWELL = "geofence_dwell"
+    ALERT_RAISED = "alert_raised"
+    ALERT_RESOLVED = "alert_resolved"
+    UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class Event:
+    """One event. id is unique per occurrence and increases monotonically."""
+
+    id: int
+    type: EventType
+    raw_type: str
+    sn: int
+    time: datetime | None
+    data: dict[str, Any]
+
+    @property
+    def fault(self) -> Fault | None:
+        """The fault carried by dtc_set and dtc_cleared, else None."""
+        if self.type not in (EventType.DTC_SET, EventType.DTC_CLEARED):
+            return None
+        return Fault.from_dict({**self.data, "id": self.data.get("faultId")})
+
+    @property
+    def lamps(self) -> Lamps | None:
+        """The new lamp state carried by lamp_changed, else None."""
+        if self.type is not EventType.LAMP_CHANGED:
+            return None
+        return Lamps.from_dict(self.data.get("lamps"))
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Event:
+        """Build from an event object."""
+        raw_type = str(data.get("type"))
+        return cls(
+            id=int(_require(data, "id")),
+            type=EventType.parse(raw_type),
+            raw_type=raw_type,
+            sn=int(_require(data, "sn")),
+            time=parse_time(data.get("ts")),
+            data=dict(data.get("data") or {}),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class EventPage:
+    """A GET /events response. Always store next_after as the new cursor."""
+
+    next_after: int
+    has_more: bool
+    events: tuple[Event, ...]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> EventPage:
+        """Build from an events body."""
+        return cls(
+            next_after=int(_require(data, "nextAfter")),
+            has_more=bool(data.get("hasMore", False)),
+            events=tuple(Event.from_dict(e) for e in data.get("events") or ()),
+        )

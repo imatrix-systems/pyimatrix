@@ -1,0 +1,17 @@
+{"schemaVersion": 1, "nextAfter": 107, "hasMore": true, "events": [
+ {"id": 101, "type": "dtc_set", "sn": 1000000001, "ts": "2026-11-23T14:00:00Z",
+  "data": {"faultId": "j1939:0:110:0@1763906400000", "displayCode": "SPN 110 FMI 0", "name": "Engine Coolant Temperature",
+           "protocol": "j1939", "severity": "critical", "ecu": "Engine #1", "sourceAddress": 0, "spn": 110, "fmi": 0, "code": null,
+           "setTs": "2026-11-23T14:00:00Z"}},
+ {"id": 102, "type": "dtc_cleared", "sn": 1000000001, "ts": "2026-11-23T14:30:00Z",
+  "data": {"faultId": "obd2:P0420:16@1763800000000", "displayCode": "P0420", "name": null, "protocol": "obd2", "severity": "warning",
+           "ecu": null, "sourceAddress": null, "spn": null, "fmi": null, "code": "P0420", "setTs": "2026-11-22T08:14:00Z",
+           "clearTs": "2026-11-23T14:30:00Z", "inferred": true, "manual": false}},
+ {"id": 103, "type": "lamp_changed", "sn": 1000000001, "ts": "2026-11-23T14:00:01Z",
+  "data": {"lamps": {"mil": false, "redStop": true, "amber": false, "protect": null}, "previous": null}},
+ {"id": 104, "type": "geofence_enter", "sn": 1000000001, "ts": "2026-11-23T14:40:00Z",
+  "data": {"geofenceId": 55, "geofenceName": "Yard", "sourceEventId": 9001}},
+ {"id": 105, "type": "alert_raised", "sn": 1000000002, "ts": "2026-11-23T14:41:00Z",
+  "data": {"alertId": 7, "transition": "opened", "source": "device_limit", "severity": "critical", "title": "Probe 1 high", "conditionKey": "k"}},
+ {"id": 106, "type": "teleport", "sn": 1000000002, "ts": null, "data": null}
+]}

@@ -8,7 +8,17 @@ from datetime import datetime
 from .auth import AbstractAuth
 from .const import DEVICE_PAGE_SIZE, MAX_DEVICES_PER_LATEST, MAX_HISTORY_SENSORS
 from .exceptions import IMatrixResponseError
-from .models import Account, Device, DeviceState, Faults, History, Latest, Trip
+from .models import (
+    Account,
+    Device,
+    DeviceState,
+    EventPage,
+    EventType,
+    Faults,
+    History,
+    Latest,
+    Trip,
+)
 
 
 def _csv(values: Iterable[int]) -> str:
@@ -108,3 +118,24 @@ class IMatrixClient:
         """Return trips, newest first. Server limit: 31 days, default the last 7."""
         body = await self.auth.request(f"/devices/{int(sn)}/trips", _window(start, end))
         return [Trip.from_dict(t) for t in body.get("trips") or ()]
+
+    async def get_events(
+        self,
+        after: int | None = None,
+        *,
+        types: Iterable[EventType | str] | None = None,
+        limit: int | None = None,
+    ) -> EventPage:
+        """Return events after a cursor, oldest first.
+
+        Without `after` the page is empty and next_after is the newest id: store it as
+        the starting cursor so events from before setup are never replayed.
+        """
+        params: dict[str, str] = {}
+        if after is not None:
+            params["after"] = str(int(after))
+        if types is not None:
+            params["types"] = ",".join(str(t) for t in types)
+        if limit is not None:
+            params["limit"] = str(int(limit))
+        return EventPage.from_dict(await self.auth.request("/events", params))
