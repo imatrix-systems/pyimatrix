@@ -678,3 +678,48 @@ class EventPage:
             has_more=bool(data.get("hasMore", False)),
             events=tuple(Event.from_dict(e) for e in data.get("events") or ()),
         )
+
+
+@dataclass(frozen=True)
+class FloorPlanSummary:
+    """One floor plan the credential can see (spec 822 FR-22)."""
+
+    id: str
+    group_id: int
+    name: str
+    revision: int
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FloorPlanSummary:
+        """Build from the /floor-plans list item."""
+        return cls(
+            id=str(data["id"]),
+            group_id=int(data.get("groupId") or 0),
+            name=str(data.get("name") or ""),
+            revision=int(data.get("revision") or 0),
+        )
+
+
+@dataclass(frozen=True)
+class FloorPlanDesired:
+    """Desired Home Assistant state for a plan (spec 822 FR-6). Lists are kept as received."""
+
+    revision: int
+    floors: list[dict[str, Any]]
+    areas: list[dict[str, Any]]
+    labels: list[dict[str, Any]]
+    device_assignments: list[dict[str, Any]]
+    loss_report: dict[str, Any]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FloorPlanDesired:
+        """Build from the /floor-plans/{id}/ha-desired body."""
+        d = data.get("desired") or {}
+        return cls(
+            revision=int(data.get("revision") or 0),
+            floors=list(d.get("floors") or ()),
+            areas=list(d.get("areas") or ()),
+            labels=list(d.get("labels") or ()),
+            device_assignments=list(d.get("device_assignments") or ()),
+            loss_report=dict(d.get("loss_report") or {}),
+        )

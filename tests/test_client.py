@@ -160,3 +160,48 @@ async def test_get_latest_chunks_over_500(client: IMatrixClient, api: FakeApi) -
     assert set(latest.devices) == {1, 501, 1001}
     assert latest.server_time == datetime(2026, 11, 23, 15, 0, 1, tzinfo=UTC)
     assert [len(s.query["sns"].split(",")) for s in api.seen] == [500, 500, 101]
+
+
+async def test_floor_plans_and_desired(client: IMatrixClient, api: FakeApi) -> None:
+    """Spec 822 FR-22: list plans and fetch the desired HA state with instance and policy."""
+    plan = {"id": "p1", "groupId": 7, "name": "Cold store", "revision": 4}
+    api.add("/floor-plans", {"schemaVersion": 1, "list": [plan]})
+    api.add(
+        "/floor-plans/p1/ha-desired",
+        {
+            "schemaVersion": 1,
+            "revision": 4,
+            "desired": {
+                "floors": [{"fpm_id": "L0", "name": "Ground Floor", "level": 0}],
+                "areas": [{"fpm_ids": ["s1"], "name": "Freezer"}],
+                "labels": [],
+                "device_assignments": [],
+                "loss_report": {"dropped": [], "approximated": [], "notes": []},
+            },
+        },
+    )
+    plans = await client.get_floor_plans()
+    assert plans[0].id == "p1" and plans[0].group_id == 7 and plans[0].revision == 4
+    desired = await client.get_floor_plan_desired(
+        "p1", instance_id="inst-0001", policy={"connector_mode": "split"}
+    )
+    assert desired.revision == 4
+    assert desired.areas[0]["name"] == "Freezer"
+
+
+async def test_ha_devices_put_and_delete(client: IMatrixClient, api: FakeApi) -> None:
+    """Spec 822 FR-28, FR-29: the opt-in device list is a PUT and a DELETE."""
+    api.add("/ha-devices", {"schemaVersion": 1, "count": 1})
+    count = await client.put_ha_devices(
+        "inst-0001",
+        [
+            {
+                "haDeviceId": "d1",
+                "name": "Hall light",
+                "integrationDomain": "hue",
+                "categories": ["light"],
+            }
+        ],
+    )
+    assert count == 1
+    await client.delete_ha_devices("inst-0001")

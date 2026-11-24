@@ -69,7 +69,7 @@ class FakeApi:
 async def api() -> AsyncIterator[FakeApi]:
     fake = FakeApi()
     app = web.Application()
-    app.router.add_get("/{tail:.*}", fake.handle)
+    app.router.add_route("*", "/{tail:.*}", fake.handle)
     fake.server = TestServer(app)
     await fake.server.start_server()
     yield fake
