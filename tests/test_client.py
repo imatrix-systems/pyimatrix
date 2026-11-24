@@ -71,7 +71,7 @@ async def test_get_devices_paginates(client: IMatrixClient, api: FakeApi) -> Non
     assert freezer.connectivity.is_reachable
     assert freezer.channels[0].unit == "°C"
 
-    assert odd.kind is DeviceKind.UNKNOWN
+    assert odd.kind is DeviceKind.OTHER
     assert odd.platform_type is PlatformType.UNKNOWN
     assert odd.connectivity.state is ConnectivityState.UNKNOWN
     assert not odd.connectivity.is_reachable

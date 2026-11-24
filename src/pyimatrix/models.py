@@ -26,9 +26,17 @@ class DeviceKind(_ForwardCompatEnum):
 
     VEHICLE = "vehicle"
     ENVIRONMENTAL = "environmental"
+    TRACKER = "tracker"
     GATEWAY = "gateway"
     OTHER = "other"
-    UNKNOWN = "unknown"
+
+    @classmethod
+    def parse(cls, value: Any) -> DeviceKind:
+        """Map unknown kinds to OTHER (the backend's own catch-all)."""
+        try:
+            return cls(value)
+        except ValueError:
+            return cls.OTHER
 
 
 class PlatformType(_ForwardCompatEnum):
