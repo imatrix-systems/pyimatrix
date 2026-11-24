@@ -46,6 +46,17 @@ from .models import (
     Trip,
     TripStatus,
 )
+from .stream import (
+    ConnectivityFrame,
+    ErrorFrame,
+    EventFrame,
+    Frame,
+    IMatrixStream,
+    PositionFrame,
+    ReplayDoneFrame,
+    SubscribedFrame,
+    ValuesFrame,
+)
 
 __version__ = VERSION
 
@@ -61,11 +72,14 @@ __all__ = [
     "ChannelMode",
     "ChannelState",
     "Connectivity",
+    "ConnectivityFrame",
     "ConnectivityState",
     "Device",
     "DeviceKind",
     "DeviceState",
+    "ErrorFrame",
     "Event",
+    "EventFrame",
     "EventPage",
     "EventType",
     "Fault",
@@ -73,6 +87,7 @@ __all__ = [
     "FaultSeverity",
     "FaultStatus",
     "Faults",
+    "Frame",
     "History",
     "HistoryPoint",
     "HistorySeries",
@@ -84,6 +99,7 @@ __all__ = [
     "IMatrixPermissionError",
     "IMatrixRateLimitError",
     "IMatrixResponseError",
+    "IMatrixStream",
     "IMatrixUnsupportedSchemaError",
     "Lamps",
     "LatLng",
@@ -91,9 +107,13 @@ __all__ = [
     "Limits",
     "PlatformType",
     "Position",
+    "PositionFrame",
     "Reading",
+    "ReplayDoneFrame",
+    "SubscribedFrame",
     "TokenAuth",
     "Trip",
     "TripStatus",
+    "ValuesFrame",
     "__version__",
 ]

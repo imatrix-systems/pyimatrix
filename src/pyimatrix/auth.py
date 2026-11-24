@@ -46,6 +46,7 @@ class AbstractAuth(ABC):
         self._session = session
         self._base_url = base_url.rstrip("/")
         self._timeout = aiohttp.ClientTimeout(total=timeout)
+        self._ws_timeout = aiohttp.ClientWSTimeout(ws_close=10)
         agent = f"{USER_AGENT_PRODUCT}/{VERSION}"
         self._user_agent = f"{agent} {user_agent}" if user_agent else agent
         self.rate_limit_remaining: int | None = None
@@ -85,6 +86,30 @@ class AbstractAuth(ABC):
                 f"expected {SCHEMA_VERSION}"
             )
         return body
+
+    async def ws_connect(self, path: str) -> aiohttp.ClientWebSocketResponse:
+        """Open an authenticated WebSocket on an integration API path.
+
+        Upgrade refusals map like REST: 401 to IMatrixAuthError, 403 to
+        IMatrixPermissionError, 404 (stream disabled on the server) to
+        IMatrixNotFoundError. aiohttp answers server pings (autoping).
+        """
+        url = f"{self._base_url}{API_PREFIX}{path}"
+        headers = {"User-Agent": self._user_agent, **await self.async_get_auth_headers()}
+        try:
+            return await self._session.ws_connect(
+                url, headers=headers, heartbeat=None, autoping=True, timeout=self._ws_timeout
+            )
+        except aiohttp.WSServerHandshakeError as err:
+            if err.status == 401:
+                raise IMatrixAuthError(f"HTTP {err.status}") from err
+            if err.status == 403:
+                raise IMatrixPermissionError(f"HTTP {err.status}") from err
+            if err.status == 404:
+                raise IMatrixNotFoundError(f"HTTP {err.status}") from err
+            raise IMatrixConnectionError(f"stream upgrade failed: HTTP {err.status}") from err
+        except (TimeoutError, aiohttp.ClientError) as err:
+            raise IMatrixConnectionError(f"stream connect failed: {err}") from err
 
     def _record_rate_limit(self, resp: aiohttp.ClientResponse) -> None:
         remaining = resp.headers.get("RateLimit-Remaining")
