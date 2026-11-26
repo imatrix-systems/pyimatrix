@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.1.0 (2026-11-26)
 
 - REST client for `/api/v1/integration` schemaVersion 1: `get_account`, `get_devices` (cursor
   pagination), `get_latest` (batches of 500 sns, `since` delta polling).
