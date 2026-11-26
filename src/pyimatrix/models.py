@@ -723,3 +723,74 @@ class FloorPlanDesired:
             device_assignments=list(d.get("device_assignments") or ()),
             loss_report=dict(d.get("loss_report") or {}),
         )
+
+
+@dataclass(frozen=True)
+class FloorPlanMarker:
+    """One placed device on a level card (spec 822 FR-33).
+
+    ``x`` and ``y`` are percentages of the SVG viewBox.
+    """
+
+    placement_id: str
+    device_id: str
+    name: str
+    category: str
+    x: float
+    y: float
+    identifiers: list[dict[str, str]]
+    entity_hints: list[str]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FloorPlanMarker:
+        """Build from one ``markers`` item."""
+        return cls(
+            placement_id=str(data["placementId"]),
+            device_id=str(data.get("deviceId") or ""),
+            name=str(data.get("name") or ""),
+            category=str(data.get("category") or ""),
+            x=float(data.get("x") or 0),
+            y=float(data.get("y") or 0),
+            identifiers=[dict(i) for i in data.get("identifiers") or ()],
+            entity_hints=[str(e) for e in data.get("entityHints") or ()],
+        )
+
+
+@dataclass(frozen=True)
+class FloorPlanLevelRef:
+    """A level of the plan's building, for a level switcher."""
+
+    id: str
+    name: str
+    ordinal: int
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FloorPlanLevelRef:
+        """Build from a ``level`` or ``levels`` item."""
+        return cls(
+            id=str(data["id"]),
+            name=str(data.get("name") or ""),
+            ordinal=int(data.get("ordinal") or 0),
+        )
+
+
+@dataclass(frozen=True)
+class FloorPlanLevelCard:
+    """One level drawn for a Home Assistant dashboard (spec 822 FR-33)."""
+
+    revision: int
+    level: FloorPlanLevelRef
+    levels: list[FloorPlanLevelRef]
+    svg: str
+    markers: list[FloorPlanMarker]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> FloorPlanLevelCard:
+        """Build from the /floor-plans/{id}/levels/{level}/card body."""
+        return cls(
+            revision=int(data.get("revision") or 0),
+            level=FloorPlanLevelRef.from_dict(data["level"]),
+            levels=[FloorPlanLevelRef.from_dict(lv) for lv in data.get("levels") or ()],
+            svg=str(data.get("svg") or ""),
+            markers=[FloorPlanMarker.from_dict(m) for m in data.get("markers") or ()],
+        )
