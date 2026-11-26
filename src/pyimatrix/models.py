@@ -758,11 +758,13 @@ class FloorPlanMarker:
 
 @dataclass(frozen=True)
 class FloorPlanLevelRef:
-    """A level of the plan's building, for a level switcher."""
+    """A level of the plan, for a level switcher. Plans can hold several buildings."""
 
     id: str
     name: str
     ordinal: int
+    building_id: str = ""
+    building_name: str = ""
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> FloorPlanLevelRef:
@@ -771,6 +773,8 @@ class FloorPlanLevelRef:
             id=str(data["id"]),
             name=str(data.get("name") or ""),
             ordinal=int(data.get("ordinal") or 0),
+            building_id=str(data.get("buildingId") or ""),
+            building_name=str(data.get("buildingName") or ""),
         )
 
 

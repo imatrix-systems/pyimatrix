@@ -9,6 +9,7 @@ from pyimatrix import (
     ConnectivityState,
     DeviceKind,
     IMatrixClient,
+    IMatrixError,
     IMatrixResponseError,
     PlatformType,
 )
@@ -217,7 +218,13 @@ async def test_floor_plan_level_card(client: IMatrixClient, api: FakeApi) -> Non
             "level": {"id": "l1", "name": "Ground", "ordinal": 0},
             "levels": [
                 {"id": "l1", "name": "Ground", "ordinal": 0},
-                {"id": "l2", "name": "Upstairs", "ordinal": 1},
+                {
+                    "id": "l2",
+                    "name": "Upstairs",
+                    "ordinal": 1,
+                    "buildingId": "b1",
+                    "buildingName": "House",
+                },
             ],
             "svg": "<svg/>",
             "markers": [
@@ -237,7 +244,16 @@ async def test_floor_plan_level_card(client: IMatrixClient, api: FakeApi) -> Non
     card = await client.get_floor_plan_level_card("p1", "l1", instance_id="inst-0001")
     assert card.revision == 5 and card.level.name == "Ground"
     assert [lv.ordinal for lv in card.levels] == [0, 1]
+    assert card.levels[1].building_name == "House"
     marker = card.markers[0]
     assert (marker.placement_id, marker.x, marker.y) == ("pl1", 12.5, 40.0)
     assert marker.identifiers == [{"scheme": "imatrix_sn", "value": "123"}]
     assert marker.entity_hints == ["sensor.freezer"]
+
+
+async def test_floor_plan_level_card_quotes_path_parts(client: IMatrixClient, api: FakeApi) -> None:
+    """A level id cannot climb to another plan: path parts are percent-encoded."""
+    api.add("/floor-plans/p2/levels/l1/card", {"schemaVersion": 1, "level": {"id": "x"}})
+    with pytest.raises(IMatrixError):
+        await client.get_floor_plan_level_card("p1", "../../p2/levels/l1")
+    assert api.seen[-1].path.startswith("/floor-plans/p1/levels/")

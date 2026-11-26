@@ -6,6 +6,7 @@ import json
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any
+from urllib.parse import quote
 
 from .auth import AbstractAuth
 from .const import DEVICE_PAGE_SIZE, MAX_DEVICES_PER_LATEST, MAX_HISTORY_SENSORS
@@ -167,7 +168,8 @@ class IMatrixClient:
     ) -> FloorPlanLevelCard:
         """Return one level drawn for a Home Assistant dashboard (spec 822 FR-33)."""
         params = {"instanceId": instance_id} if instance_id else None
-        body = await self.auth.request(f"/floor-plans/{plan_id}/levels/{level_id}/card", params)
+        path = f"/floor-plans/{quote(plan_id, safe='')}/levels/{quote(level_id, safe='')}/card"
+        body = await self.auth.request(path, params)
         return FloorPlanLevelCard.from_dict(body)
 
     async def put_ha_devices(self, instance_id: str, devices: list[dict[str, Any]]) -> int:
