@@ -57,6 +57,20 @@ class AbstractAuth(ABC):
 
     async def request(self, path: str, params: dict[str, str] | None = None) -> dict[str, Any]:
         """GET an integration API path and return the parsed, version-checked body."""
+        return await self.send("GET", path, params=params)
+
+    async def send(
+        self,
+        method: str,
+        path: str,
+        *,
+        params: dict[str, str] | None = None,
+        json: Any = None,
+    ) -> dict[str, Any]:
+        """Call an integration API path with any method and return the version-checked body.
+
+        Writes exist only for the opt-in floor plan device sharing (spec 822 FR-28).
+        """
         url = f"{self._base_url}{API_PREFIX}{path}"
         headers = {
             "Accept": "application/json",
@@ -64,11 +78,11 @@ class AbstractAuth(ABC):
             **await self.async_get_auth_headers(),
         }
         try:
-            async with self._session.get(
-                url, params=params, headers=headers, timeout=self._timeout
+            async with self._session.request(
+                method, url, params=params, json=json, headers=headers, timeout=self._timeout
             ) as resp:
                 self._record_rate_limit(resp)
-                _LOGGER.debug("GET %s -> %s", path, resp.status)
+                _LOGGER.debug("%s %s -> %s", method, path, resp.status)
                 await self._raise_for_status(resp)
                 try:
                     body = await resp.json(content_type=None)

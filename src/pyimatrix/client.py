@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from datetime import datetime
+from typing import Any
 
 from .auth import AbstractAuth
 from .const import DEVICE_PAGE_SIZE, MAX_DEVICES_PER_LATEST, MAX_HISTORY_SENSORS
@@ -15,6 +17,8 @@ from .models import (
     EventPage,
     EventType,
     Faults,
+    FloorPlanDesired,
+    FloorPlanSummary,
     History,
     Latest,
     Trip,
@@ -139,3 +143,34 @@ class IMatrixClient:
         if limit is not None:
             params["limit"] = str(int(limit))
         return EventPage.from_dict(await self.auth.request("/events", params))
+
+    async def get_floor_plans(self) -> list[FloorPlanSummary]:
+        """Return the floor plans the credential can see (spec 822 FR-22)."""
+        body = await self.auth.request("/floor-plans")
+        return [FloorPlanSummary.from_dict(p) for p in body.get("list") or ()]
+
+    async def get_floor_plan_desired(
+        self, plan_id: str, *, instance_id: str | None = None, policy: dict[str, Any] | None = None
+    ) -> FloorPlanDesired:
+        """Return the desired Home Assistant state for one plan and HA instance (spec 822 FR-6)."""
+        params: dict[str, str] = {}
+        if instance_id:
+            params["instanceId"] = instance_id
+        if policy:
+            params["policy"] = json.dumps(policy, separators=(",", ":"))
+        body = await self.auth.request(f"/floor-plans/{plan_id}/ha-desired", params)
+        return FloorPlanDesired.from_dict(body)
+
+    async def put_ha_devices(self, instance_id: str, devices: list[dict[str, Any]]) -> int:
+        """Replace the shared HA device list for one instance (spec 822 FR-28).
+
+        Returns the number of devices stored.
+        """
+        body = await self.auth.send(
+            "PUT", "/ha-devices", json={"instanceId": instance_id, "devices": devices}
+        )
+        return int(body.get("count") or 0)
+
+    async def delete_ha_devices(self, instance_id: str) -> None:
+        """Withdraw the shared HA device list for one instance (spec 822 FR-29)."""
+        await self.auth.send("DELETE", "/ha-devices", params={"instanceId": instance_id})
