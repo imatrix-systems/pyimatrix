@@ -13,6 +13,7 @@ from pyimatrix import (
     IMatrixResponseError,
     PlatformType,
 )
+from pyimatrix.const import VERSION
 
 from .conftest import FAKE_KEY, FakeApi, fixture
 
@@ -28,7 +29,7 @@ async def test_get_account(client: IMatrixClient, api: FakeApi) -> None:
     assert client.auth.rate_limit_remaining == 119
     headers = api.seen[0].headers
     assert headers["X-API-Key"] == FAKE_KEY
-    assert headers["User-Agent"] == "pyimatrix/0.1.0 HomeAssistant/2026.11.2"
+    assert headers["User-Agent"] == f"pyimatrix/{VERSION} HomeAssistant/2026.11.2"
     assert headers["Accept"] == "application/json"
 
 

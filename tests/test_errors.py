@@ -114,4 +114,4 @@ async def test_token_auth_sends_bearer(session: aiohttp.ClientSession, api: Fake
     headers = api.seen[0].headers
     assert headers["Authorization"] == "Bearer tok_fake"
     assert "X-API-Key" not in headers
-    assert headers["User-Agent"] == "pyimatrix/0.1.0"
+    assert headers["User-Agent"] == "pyimatrix/0.1.1"
