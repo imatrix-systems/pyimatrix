@@ -10,6 +10,8 @@
 - B4: `IMatrixStream` live WebSocket client (reconnect with jittered backoff from 1 s to 5 min,
   resume from the last event id, 4401 raises `IMatrixAuthError`, 4429 backs off 60 s,
   HTTP 404 raises `IMatrixNotFoundError` when the server has the stream off).
+- Floor plans (spec 822): `get_floor_plans`, `get_floor_plan_desired`, `put_ha_devices`,
+  `delete_ha_devices`, `get_floor_plan_level_card` (level SVG and markers for dashboards).
 - `ApiKeyAuth` (`X-API-Key`) and `TokenAuth` (Bearer, base for OAuth2).
 - `DeviceKind.TRACKER` (backend #3410). Unknown kinds parse as `OTHER`.
 - Typed models. Unknown enum values map to `UNKNOWN`. `Channel.state_count` is set in place of

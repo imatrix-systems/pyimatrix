@@ -6,6 +6,7 @@ import json
 from collections.abc import Iterable
 from datetime import datetime
 from typing import Any
+from urllib.parse import quote
 
 from .auth import AbstractAuth
 from .const import DEVICE_PAGE_SIZE, MAX_DEVICES_PER_LATEST, MAX_HISTORY_SENSORS
@@ -18,6 +19,7 @@ from .models import (
     EventType,
     Faults,
     FloorPlanDesired,
+    FloorPlanLevelCard,
     FloorPlanSummary,
     History,
     Latest,
@@ -160,6 +162,15 @@ class IMatrixClient:
             params["policy"] = json.dumps(policy, separators=(",", ":"))
         body = await self.auth.request(f"/floor-plans/{plan_id}/ha-desired", params)
         return FloorPlanDesired.from_dict(body)
+
+    async def get_floor_plan_level_card(
+        self, plan_id: str, level_id: str, *, instance_id: str | None = None
+    ) -> FloorPlanLevelCard:
+        """Return one level drawn for a Home Assistant dashboard (spec 822 FR-33)."""
+        params = {"instanceId": instance_id} if instance_id else None
+        path = f"/floor-plans/{quote(plan_id, safe='')}/levels/{quote(level_id, safe='')}/card"
+        body = await self.auth.request(path, params)
+        return FloorPlanLevelCard.from_dict(body)
 
     async def put_ha_devices(self, instance_id: str, devices: list[dict[str, Any]]) -> int:
         """Replace the shared HA device list for one instance (spec 822 FR-28).
