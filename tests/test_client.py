@@ -257,3 +257,20 @@ async def test_floor_plan_level_card_quotes_path_parts(client: IMatrixClient, ap
     with pytest.raises(IMatrixError):
         await client.get_floor_plan_level_card("p1", "../../p2/levels/l1")
     assert api.seen[-1].path.startswith("/floor-plans/p1/levels/")
+
+
+async def test_floor_plan_ha_changes(client: IMatrixClient, api: FakeApi) -> None:
+    """Spec 822 FR-43: changes go up as one POST with plan ids only."""
+    api.add(
+        "/floor-plans/p1/ha-changes",
+        {"schemaVersion": 1, "applied": 1, "waiting": 2, "revision": 8},
+    )
+    out = await client.post_floor_plan_ha_changes(
+        "p1",
+        "inst-0001",
+        7,
+        [{"kind": "rename", "fpmId": "s1", "name": "Den"}],
+        {"supports_nested_areas": False},
+    )
+    assert out == {"applied": 1, "waiting": 2, "revision": 8}
+    assert api.seen[-1].path == "/floor-plans/p1/ha-changes"

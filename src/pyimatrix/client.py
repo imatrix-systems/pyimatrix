@@ -172,6 +172,35 @@ class IMatrixClient:
         body = await self.auth.request(path, params)
         return FloorPlanLevelCard.from_dict(body)
 
+    async def post_floor_plan_ha_changes(
+        self,
+        plan_id: str,
+        instance_id: str,
+        revision: int,
+        changes: list[dict[str, Any]],
+        capabilities: dict[str, bool] | None = None,
+    ) -> dict[str, int]:
+        """Report changes Home Assistant made to plan objects (spec 822 FR-43).
+
+        Each change names plan ids only. Returns ``applied``, ``waiting`` and the new
+        plan ``revision``.
+        """
+        payload: dict[str, Any] = {
+            "instanceId": instance_id,
+            "revision": revision,
+            "changes": changes,
+        }
+        if capabilities is not None:
+            payload["capabilities"] = capabilities
+        body = await self.auth.send(
+            "POST", f"/floor-plans/{quote(plan_id, safe='')}/ha-changes", json=payload
+        )
+        return {
+            "applied": int(body.get("applied") or 0),
+            "waiting": int(body.get("waiting") or 0),
+            "revision": int(body.get("revision") or 0),
+        }
+
     async def put_ha_devices(self, instance_id: str, devices: list[dict[str, Any]]) -> int:
         """Replace the shared HA device list for one instance (spec 822 FR-28).
 
