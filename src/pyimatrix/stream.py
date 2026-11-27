@@ -215,7 +215,9 @@ class IMatrixStream:
     async def run(self) -> None:
         """Run until stop(). Raises on errors that a retry cannot fix.
 
-        IMatrixAuthError: credential rejected or revoked (close 4401, HTTP 401).
+        IMatrixAuthError: credential rejected or revoked (HTTP 401, or close 4401
+            before the session subscribed). A 4401 after subscribing means the
+            access token expired, so the stream reconnects with a fresh one.
         IMatrixPermissionError: credential lacks permission (HTTP 403).
         IMatrixNotFoundError: the server has the stream turned off (HTTP 404).
         """
@@ -271,13 +273,22 @@ class IMatrixStream:
                 await self._notify(False)
             await self._ws.close()
             self._ws = None
+        self._raise_for_close(code, subscribed)
+        return subscribed
+
+    def _raise_for_close(self, code: int | None, subscribed: bool) -> None:
+        """Turn the close code of a session into the error run() acts on."""
         if code == CLOSE_UNAUTHORIZED:
+            if subscribed:
+                # The server closes at the access token's expiry (every 15 min for OAuth).
+                # Reconnect: ws_connect asks the auth for a fresh token. A revoked
+                # credential then fails the upgrade with 401 and raises there.
+                raise IMatrixConnectionError("stream closed: token expired")
             raise IMatrixAuthError("stream closed: credential revoked or expired")
         if code == CLOSE_TOO_MANY_STREAMS:
             raise _TooManyStreams
         if not self._stopped:
             raise IMatrixConnectionError(f"stream closed with code {code}")
-        return subscribed
 
     async def _notify(self, connected: bool) -> None:
         if self._on_connected is not None:

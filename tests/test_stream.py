@@ -197,18 +197,35 @@ async def test_frames_and_reconnect_resume(
     assert rec.sleeps == [1.0, 1.0]
 
 
-async def test_closed_4401_raises_auth(
+async def test_closed_4401_after_subscribe_reconnects(
+    session: aiohttp.ClientSession, stream_api: FakeStream
+) -> None:
+    """The server closes at token expiry; the stream reconnects with a fresh token."""
+
+    async def expired(ws: web.WebSocketResponse, sub: dict[str, Any]) -> None:
+        await ws.send_json(subscribed())
+        await ws.close(code=4401)
+
+    stream_api.scripts = [expired]
+    rec = Recorder()
+    stream = make_stream(session, stream_api.base_url, rec)
+    await stream.run()
+    assert stream.reconnects == 1
+    assert rec.sleeps == [1.0]
+    assert rec.states == [True, False]
+
+
+async def test_closed_4401_before_subscribe_raises_auth(
     session: aiohttp.ClientSession, stream_api: FakeStream
 ) -> None:
     async def revoked(ws: web.WebSocketResponse, sub: dict[str, Any]) -> None:
-        await ws.send_json(subscribed())
         await ws.close(code=4401)
 
     stream_api.scripts = [revoked]
     rec = Recorder()
     with pytest.raises(IMatrixAuthError):
         await make_stream(session, stream_api.base_url, rec).run()
-    assert rec.states == [True, False]
+    assert rec.states == []
 
 
 async def test_too_many_streams_backs_off(

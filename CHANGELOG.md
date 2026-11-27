@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 (2026-11-27)
+
+- `IMatrixStream`: a 4401 close after the session subscribed now reconnects with a fresh token. The
+  server sends 4401 when an OAuth access token expires (every 15 minutes), and 0.1.0 treated that as a
+  revoked credential. A 4401 before subscribing, or HTTP 401 on the upgrade, still raises
+  `IMatrixAuthError`.
+
 ## 0.1.0 (2026-11-26)
 
 - REST client for `/api/v1/integration` schemaVersion 1: `get_account`, `get_devices` (cursor

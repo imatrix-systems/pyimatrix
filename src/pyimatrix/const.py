@@ -2,7 +2,7 @@
 
 from typing import Final
 
-VERSION: Final = "0.1.0"
+VERSION: Final = "0.1.1"
 DEFAULT_BASE_URL: Final = "https://api.imatrixsys.com"
 API_PREFIX: Final = "/api/v1/integration"
 SCHEMA_VERSION: Final = 1
