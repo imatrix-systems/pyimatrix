@@ -196,6 +196,14 @@ class Channel:
     states: tuple[ChannelState, ...]
     # Set instead of states when a stateful channel has more than 64 states.
     state_count: int | None = None
+    # Spec 856: "Visible in Latest Readings" in iMatrix. True from servers without spec 856.
+    visible: bool = True
+    # Spec 856: 0-based place in the device's iMatrix display order. None from older servers.
+    position: int | None = None
+    # Spec 856: a cloud-computed virtual sensor.
+    virtual: bool = False
+    # Spec 856: display decimals of a virtual sensor.
+    decimals: int | None = None
 
     @property
     def is_mapped(self) -> bool:
@@ -207,6 +215,8 @@ class Channel:
         """Build from a channel object."""
         sensor_id = int(_require(data, "sensorId"))
         state_count = data.get("stateCount")
+        position = data.get("position")
+        decimals = data.get("decimals")
         return cls(
             sensor_id=sensor_id,
             key=str(data.get("key") or f"s{sensor_id}"),
@@ -220,6 +230,10 @@ class Channel:
                 for s in data.get("states") or ()
             ),
             state_count=None if state_count is None else int(state_count),
+            visible=data.get("visible") is not False,
+            position=None if position is None else int(position),
+            virtual=bool(data.get("virtual", False)),
+            decimals=None if decimals is None else int(decimals),
         )
 
 
@@ -240,6 +254,8 @@ class Device:
     via_seen_at: datetime | None
     connectivity: Connectivity
     channels: tuple[Channel, ...]
+    # Spec 856: changes when, and only when, the channel list does. None from older servers.
+    config_version: str | None = None
 
     def channel(self, key: str) -> Channel | None:
         """Return the channel with a semantic key, if the device has one."""
@@ -266,6 +282,7 @@ class Device:
             via_seen_at=parse_time(data.get("viaSeenAt")),
             connectivity=Connectivity.from_dict(data.get("connectivity") or {}),
             channels=tuple(Channel.from_dict(c) for c in data.get("channels") or ()),
+            config_version=data.get("configVersion"),
         )
 
 
@@ -309,11 +326,15 @@ class Reading:
     alarm: AlarmLevel
     alarm_side: AlarmSide | None
     clock_skew: bool
+    # Spec 856: why a virtual sensor has no value (value is None), for example "missing_input".
+    error_code: str | None = None
+    error_message: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Reading:
         """Build from a value object."""
         side = data.get("alarmSide")
+        error = data.get("error")
         raw = data.get("v")
         value: float | str | None
         if raw is None or isinstance(raw, str):
@@ -326,6 +347,8 @@ class Reading:
             alarm=AlarmLevel.parse(data.get("alarm", "none")),
             alarm_side=None if side is None else AlarmSide.parse(side),
             clock_skew=bool(data.get("clockSkew", False)),
+            error_code=None if not isinstance(error, dict) else error.get("code"),
+            error_message=None if not isinstance(error, dict) else error.get("message"),
         )
 
 
@@ -336,6 +359,8 @@ class DeviceState:
     connectivity: Connectivity
     position: Position | None
     readings: dict[int, Reading]
+    # Spec 856: the device's current configVersion. None from older servers.
+    config_version: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> DeviceState:
@@ -348,6 +373,7 @@ class DeviceState:
                 int(sensor_id): Reading.from_dict(v)
                 for sensor_id, v in (data.get("values") or {}).items()
             },
+            config_version=data.get("configVersion"),
         )
 
 
@@ -620,6 +646,7 @@ class EventType(_ForwardCompatEnum):
     GEOFENCE_DWELL = "geofence_dwell"
     ALERT_RAISED = "alert_raised"
     ALERT_RESOLVED = "alert_resolved"
+    DEVICE_CONFIG_CHANGED = "device_config_changed"
     UNKNOWN = "unknown"
 
 
@@ -647,6 +674,14 @@ class Event:
         if self.type is not EventType.LAMP_CHANGED:
             return None
         return Lamps.from_dict(self.data.get("lamps"))
+
+    @property
+    def config_version(self) -> str | None:
+        """The new configVersion carried by device_config_changed, else None."""
+        if self.type is not EventType.DEVICE_CONFIG_CHANGED:
+            return None
+        version = self.data.get("configVersion")
+        return None if version is None else str(version)
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Event:

@@ -51,11 +51,21 @@ class IMatrixClient:
         """Return the org and permissions of the credential."""
         return Account.from_dict(await self.auth.request("/account"))
 
-    async def get_devices(self, group_ids: Iterable[int] | None = None) -> list[Device]:
-        """Return every visible device, following pagination. group_ids include subgroups."""
+    async def get_devices(
+        self,
+        group_ids: Iterable[int] | None = None,
+        *,
+        sns: Iterable[int] | None = None,
+    ) -> list[Device]:
+        """Return every visible device, following pagination. group_ids include subgroups.
+
+        sns (spec 856 servers) limits the result to those serials, at most 500 per call.
+        """
         params: dict[str, str] = {"limit": str(DEVICE_PAGE_SIZE)}
         if group_ids is not None:
             params["groupIds"] = _csv(group_ids)
+        if sns is not None:
+            params["sns"] = _csv(sns)
         devices: list[Device] = []
         seen_cursors: set[str] = set()
         while True:
