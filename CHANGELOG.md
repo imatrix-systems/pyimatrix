@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 (unreleased)
+
+- Spec 856: `Channel.visible`, `Channel.position`, `Channel.virtual` and `Channel.decimals` (iMatrix
+  sensor order, visibility and virtual sensors). `Device.config_version` and
+  `DeviceState.config_version`. `Reading.error_code` and `Reading.error_message` for a virtual sensor
+  without a value. `EventType.DEVICE_CONFIG_CHANGED` with `Event.config_version`.
+  `get_devices(sns=...)` reads single devices. Servers without spec 856 parse as before:
+  `visible=True`, `position=None`, `config_version=None`.
+
 ## 0.1.1 (2026-11-27)
 
 - `IMatrixStream`: a 4401 close after the session subscribed now reconnects with a fresh token. The
